@@ -132,7 +132,7 @@ function load() {
   catch (e) { S = DEFAULTS(); }
 }
 let saveTimer = 0, dirty = false;
-function save() { dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 150); }
+function save() { dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 150); if (typeof scheduleSync === 'function') scheduleSync(); }
 function flush() {
   clearTimeout(saveTimer); saveTimer = 0;
   if (!dirty) return;
@@ -356,6 +356,7 @@ VIEWS.today = () => {
   const msg = !all.length ? 'Nothing scheduled.' : done === all.length ? 'Everything done. Beautiful.' : `${all.length - done} left${k === T() ? ' today' : ''}.`;
   return `
     <header class="top"><div><h1>${k === T() ? greet : 'Looking back'}</h1></div><span class="sp"></span>
+      ${signedIn() ? `<button class="icon-btn" data-act="settings" aria-label="${esc(syncLabel())}" title="${esc(syncLabel())}"><span class="sync-ind" data-s="${syncState}"></span></button>` : ''}
       <button class="icon-btn" data-act="settings" aria-label="Settings">${icon('gear')}</button></header>
     ${dateBar()}
     ${S.habits.length ? `<section class="card hero">${ring(f, 76, 8, all.length ? Math.round(f * 100) + '%' : '–')}
@@ -837,7 +838,8 @@ function settingsSheet() {
       <label class="fld"><span>Goal weight</span><input class="in" type="number" step="0.1" min="0" inputmode="decimal" value="${s.weightGoal || ''}" placeholder="optional" data-change="wgoal"></label>
       <label class="fld"><span>Height (${s.unit === 'kg' ? 'cm' : 'in'})</span><input class="in" type="number" step="0.1" min="0" inputmode="decimal" value="${s.height || ''}" placeholder="for BMI" data-change="height"></label>
     </div>
-    <div class="sect fld"><span class="lab">Your data stays on this device. Back it up now and then.</span>
+    <div class="sect fld"><span class="lab">Sync &amp; backup across devices</span><div id="syncBox" class="fld">${syncBoxHTML()}</div></div>
+    <div class="sect fld"><span class="lab">Backup file</span>
       <div class="actions" style="justify-content:flex-start">
         <button type="button" class="btn sm" data-act="export">${icon('down', 16)}Export backup</button>
         <label class="btn sm" style="cursor:pointer">${icon('up', 16)}Import backup<input type="file" accept="application/json,.json" data-change="import" hidden></label>
@@ -1020,10 +1022,250 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches('input[type=number][data-change]')) { e.preventDefault(); e.target.blur(); }
 });
 
+/* ================= cloud sync (Supabase) =================
+   Every piece of data is one record ("w:2026-11-15", "l:<habit>:<day>", "h:<habit>", "j:<day>", "s" …).
+   We keep a snapshot ("base") of what the server last had, so we know exactly what changed
+   locally and what changed remotely, and merge per record. Deletions are synced as null. */
+const CFG = window.TRACKER_CONFIG || {};
+const SKEY = 'trackerme:sync';
+let Y = loadSync();
+function loadSync() { try { const y = JSON.parse(localStorage.getItem(SKEY) || 'null'); return isObj(y) ? y : {}; } catch (e) { return {}; } }
+function saveSync() { try { localStorage.setItem(SKEY, JSON.stringify(Y)); } catch (e) {} }
+const syncUrl = () => String(CFG.supabaseUrl || Y.url || '').trim().replace(/\/+$/, '');
+const syncKey = () => String(CFG.supabaseKey || Y.key || '').trim();
+const signedIn = () => !!(syncUrl() && Y.session && Y.session.refresh_token);
+let syncState = 'idle', syncErr = '', syncRun = null, syncAgain = false, syncTimer = 0, pendingRemote = false;
+
+function canon(v) {
+  if (v === undefined || v === null) return 'null';
+  if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+  if (typeof v === 'object') return '{' + Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+  return JSON.stringify(v);
+}
+function toRecords(st) {
+  const r = { s: st.settings };
+  st.habits.forEach((h, i) => { r['h:' + h.id] = { ...h, o: i }; });
+  for (const id in st.logs) for (const k in st.logs[id]) r[`l:${id}:${k}`] = st.logs[id][k];
+  for (const k in st.weight) r['w:' + k] = st.weight[k];
+  for (const k in st.quran) r['q:' + k] = st.quran[k];
+  for (const k in st.journal) r['j:' + k] = st.journal[k];
+  return r;
+}
+function fromRecords(r) {
+  const st = { settings: r.s || {}, habits: [], logs: {}, weight: {}, quran: {}, journal: {} };
+  for (const key in r) {
+    const v = r[key]; if (v === null || v === undefined || key === 's') continue;
+    const t = key[0], rest = key.slice(2);
+    if (t === 'h') st.habits.push(v);
+    else if (t === 'l') { const i = rest.lastIndexOf(':'); const id = rest.slice(0, i); (st.logs[id] || (st.logs[id] = {}))[rest.slice(i + 1)] = v; }
+    else if (t === 'w') st.weight[rest] = v;
+    else if (t === 'q') st.quran[rest] = v;
+    else if (t === 'j') st.journal[rest] = v;
+  }
+  st.habits.sort((a, b) => (+a.o || 0) - (+b.o || 0));
+  return normalize(st);
+}
+
+async function api(path, opts = {}, auth = true) {
+  const headers = { apikey: syncKey(), 'Content-Type': 'application/json', Authorization: 'Bearer ' + (auth && Y.session ? Y.session.access_token : syncKey()), ...(opts.headers || {}) };
+  let res;
+  try { res = await fetch(syncUrl() + path, { ...opts, headers }); }
+  catch (e) { const err = new Error(navigator.onLine === false ? 'Offline — will sync when you’re back online' : 'Can’t reach the sync server'); err.offline = true; throw err; }
+  const text = await res.text();
+  let body = null; try { body = text ? JSON.parse(text) : null; } catch (e) {}
+  if (!res.ok) {
+    const err = new Error((body && (body.msg || body.message || body.error_description || body.error)) || 'Sync error ' + res.status);
+    err.status = res.status; throw err;
+  }
+  return body;
+}
+function takeSession(b) {
+  if (!b || !b.access_token) throw new Error('Login failed');
+  Y.session = {
+    access_token: b.access_token, refresh_token: b.refresh_token,
+    expires_at: +b.expires_at || Math.floor(Date.now() / 1000) + (+b.expires_in || 3600),
+    user: b.user ? { id: b.user.id, email: b.user.email } : (Y.session && Y.session.user) || null,
+  };
+  saveSync();
+}
+async function ensureToken() {
+  const s = Y.session;
+  if (s.expires_at * 1000 - 60e3 > Date.now()) return;
+  try { takeSession(await api('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: s.refresh_token }) }, false)); }
+  catch (e) { if (e.status === 400 || e.status === 401) { signOut(true); throw new Error('Signed out — please log in again'); } throw e; }
+}
+function signOut(silent) {
+  Y.session = null; Y.base = {}; Y.lastPull = ''; saveSync();
+  setSyncState('idle'); if (!silent) toast('Signed out — data stays on this device');
+}
+
+function scheduleSync(ms = 1500) { if (!signedIn()) return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, ms); }
+function setSyncState(st, err = '') {
+  syncState = st; syncErr = err;
+  document.querySelectorAll('.sync-ind').forEach(el => { el.dataset.s = st; el.title = syncLabel(); el.setAttribute('aria-label', syncLabel()); });
+  const box = $('#syncBox'); if (box) box.innerHTML = syncBoxHTML();
+}
+function syncLabel() {
+  if (!signedIn()) return 'Not syncing';
+  if (syncState === 'syncing') return 'Syncing…';
+  if (syncState === 'error') return syncErr || 'Sync failed';
+  return Y.lastSyncAt ? 'Synced ' + ago(Y.lastSyncAt) : 'Ready to sync';
+}
+function ago(t) {
+  const s = Math.round((Date.now() - t) / 1000);
+  if (s < 45) return 'just now'; if (s < 3600) return Math.round(s / 60) + ' min ago';
+  if (s < 86400) return Math.round(s / 3600) + ' h ago'; return Math.round(s / 86400) + ' d ago';
+}
+function remoteRender() {
+  const a = document.activeElement;
+  if (a && view.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) pendingRemote = true; // don't yank the field you're typing in
+  else render();
+}
+view.addEventListener('focusout', () => { if (pendingRemote) { pendingRemote = false; setTimeout(remoteRender, 0); } });
+
+function sync() {
+  if (!signedIn()) return Promise.resolve();
+  if (syncRun) { syncAgain = true; return syncRun; }
+  syncRun = (async () => {
+    setSyncState('syncing');
+    try {
+      await ensureToken();
+      flush();
+      const uid = Y.session.user && Y.session.user.id;
+      if (!uid) { const u = await api('/auth/v1/user'); Y.session.user = { id: u.id, email: u.email }; saveSync(); }
+      const initial = !Y.lastPull;
+      const base = isObj(Y.base) ? Y.base : {};
+      // 1) pull everything changed since last time (5 s overlap; re-applying is harmless)
+      const since = Y.lastPull ? new Date(Date.parse(Y.lastPull) - 5000).toISOString() : '';
+      const rows = [];
+      for (let off = 0; ; off += 1000) {
+        const page = await api(`/rest/v1/entries?select=k,v,updated_at&order=updated_at.asc,k.asc&limit=1000&offset=${off}` + (since ? `&updated_at=gt.${encodeURIComponent(since)}` : ''));
+        rows.push(...(page || [])); if (!page || page.length < 1000) break;
+      }
+      const cur = toRecords(S);
+      let changed = false, maxT = Y.lastPull || '';
+      for (const row of rows) {
+        if (row.updated_at > maxT) maxT = row.updated_at;
+        const rv = canon(row.v), lv = canon(cur[row.k]), bv = base[row.k] === undefined ? 'null' : base[row.k];
+        const localEdit = lv !== bv;
+        // Remote wins unless this device has its own unsynced edit (on first sign-in, remote wins).
+        if ((!localEdit || initial) && lv !== rv) { if (row.v === null) delete cur[row.k]; else cur[row.k] = row.v; changed = true; }
+        base[row.k] = rv;
+      }
+      if (changed) { S = fromRecords(cur); dirty = true; flush(); applyTheme(); remoteRender(); }
+      // 2) push local edits
+      const now = toRecords(S), ups = [];
+      for (const k in now) { const c = canon(now[k]); if (base[k] !== c) ups.push({ k, v: now[k], c }); }
+      for (const k in base) if (!(k in now) && base[k] !== 'null') ups.push({ k, v: null, c: 'null' });
+      const me = Y.session.user.id;
+      for (let i = 0; i < ups.length; i += 500) {
+        const chunk = ups.slice(i, i + 500);
+        await api('/rest/v1/entries?on_conflict=user_id,k', {
+          method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify(chunk.map(u => ({ user_id: me, k: u.k, v: u.v === undefined ? null : u.v }))),
+        });
+        chunk.forEach(u => { base[u.k] = u.c; });
+        Y.base = base; saveSync();
+      }
+      Y.base = base; Y.lastPull = maxT || '1970-01-01T00:00:00.000Z'; Y.lastSyncAt = Date.now(); saveSync();
+      setSyncState('ok');
+    } catch (e) {
+      setSyncState(signedIn() ? 'error' : 'idle', e.message);
+      if (!e.offline && signedIn()) toast(e.message);
+    } finally {
+      syncRun = null;
+      if (syncAgain) { syncAgain = false; scheduleSync(300); }
+    }
+  })();
+  return syncRun;
+}
+
+function syncBoxHTML() {
+  if (!syncUrl()) return `
+    <p class="tiny" style="margin:0">Connect your free Supabase project once (steps in the README), then log in with your email on every device.</p>
+    <div class="frow"><label class="fld"><span>Project URL</span><input class="in" id="sbUrl" placeholder="https://xxxx.supabase.co" autocomplete="off"></label>
+      <label class="fld"><span>Anon (public) key</span><input class="in" id="sbKey" placeholder="eyJhbGciOi…" autocomplete="off"></label></div>
+    <div class="actions" style="justify-content:flex-start"><button type="button" class="btn sm pri" data-act="sync-config">Connect</button></div>`;
+  if (!signedIn()) {
+    if (Y.pendingEmail) return `
+      <p class="tiny" style="margin:0">We emailed <b>${esc(Y.pendingEmail)}</b>. Tap the link in it, or type the 6-digit code here — the code is best on an installed phone app.</p>
+      <div class="frow"><label class="fld"><span>Code</span><input class="in" id="sbCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456"></label>
+        <button type="button" class="btn sm pri" data-act="sync-verify" style="height:44px">Verify</button></div>
+      <div class="actions" style="justify-content:flex-start"><button type="button" class="btn sm" data-act="sync-restart">Use another email</button>
+        ${CFG.supabaseUrl ? '' : '<button type="button" class="btn sm" data-act="sync-disconnect">Disconnect project</button>'}</div>`;
+    return `
+      <p class="tiny" style="margin:0">Log in with your email to back up and sync across your phone and laptop.</p>
+      <div class="frow"><label class="fld"><span>Email</span><input class="in" id="sbEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <button type="button" class="btn sm pri" data-act="sync-send" style="height:44px">Send login code</button></div>
+      ${CFG.supabaseUrl ? '' : '<div class="actions" style="justify-content:flex-start"><button type="button" class="btn sm" data-act="sync-disconnect">Disconnect project</button></div>'}`;
+  }
+  return `
+    <div class="sync-row"><span class="sync-ind" data-s="${syncState}" aria-hidden="true"></span>
+      <div style="min-width:0;flex:1"><b>${esc((Y.session.user && Y.session.user.email) || 'Signed in')}</b><div class="tiny">${esc(syncLabel())}</div></div></div>
+    <div class="actions" style="justify-content:flex-start"><button type="button" class="btn sm" data-act="sync-now">Sync now</button>
+      <button type="button" class="btn sm" data-act="sync-out">Sign out</button></div>`;
+}
+
+Object.assign(ACT, {
+  'sync-config': async () => {
+    let url = ($('#sbUrl') || {}).value || '', key = ($('#sbKey') || {}).value || '';
+    url = url.trim().replace(/\/+$/, ''); key = key.trim();
+    if (!/^https:\/\/[^/\s]+$/.test(url)) return toast('Paste the project URL, like https://xxxx.supabase.co');
+    if (key.length < 20) return toast('Paste the anon public key');
+    Y.url = url; Y.key = key; saveSync(); setSyncState('idle');
+  },
+  'sync-disconnect': () => { Y = {}; saveSync(); setSyncState('idle'); },
+  'sync-send': async el => {
+    const email = (($('#sbEmail') || {}).value || '').trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) return toast('Enter a valid email');
+    el.disabled = true;
+    try {
+      const back = location.origin + location.pathname;
+      await api('/auth/v1/otp?redirect_to=' + encodeURIComponent(back), { method: 'POST', body: JSON.stringify({ email, create_user: true }) }, false);
+      Y.pendingEmail = email; saveSync(); setSyncState('idle'); toast('Check your email');
+    } catch (e) { toast(e.message); el.disabled = false; }
+  },
+  'sync-verify': async el => {
+    const token = (($('#sbCode') || {}).value || '').replace(/\s/g, '');
+    if (!/^\d{6,10}$/.test(token)) return toast('Enter the code from the email');
+    el.disabled = true;
+    try {
+      takeSession(await api('/auth/v1/verify', { method: 'POST', body: JSON.stringify({ type: 'email', email: Y.pendingEmail, token }) }, false));
+      Y.pendingEmail = ''; Y.base = {}; Y.lastPull = ''; saveSync();
+      toast('Logged in — syncing'); await sync();
+    } catch (e) { toast(e.message); el.disabled = false; }
+  },
+  'sync-restart': () => { Y.pendingEmail = ''; saveSync(); setSyncState('idle'); },
+  'sync-now': () => sync(),
+  'sync-out': () => { if (confirm('Sign out? Your data stays on this device and in the cloud.')) signOut(); },
+});
+
+// Magic-link landing: the token arrives in the URL hash.
+async function handleAuthRedirect() {
+  const h = location.hash;
+  if (!/access_token=|error_description=/.test(h)) return;
+  const p = new URLSearchParams(h.slice(1));
+  history.replaceState(null, '', location.pathname + location.search + '#today');
+  if (p.get('error_description')) { toast(p.get('error_description').replace(/\+/g, ' ')); return; }
+  try {
+    takeSession({ access_token: p.get('access_token'), refresh_token: p.get('refresh_token'), expires_in: p.get('expires_in'), expires_at: p.get('expires_at') });
+    Y.pendingEmail = ''; Y.base = {}; Y.lastPull = ''; Y.session.user = null; saveSync();
+    const u = await api('/auth/v1/user'); Y.session.user = { id: u.id, email: u.email }; saveSync();
+    toast('Logged in — syncing');
+  } catch (e) { toast(e.message); }
+}
+
+addEventListener('online', () => scheduleSync(200));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleSync(200); });
+setInterval(() => { if (!document.hidden) sync(); }, 60e3);
+addEventListener('storage', e => { if (e.key === SKEY) Y = loadSync(); });
+
 /* ================= boot ================= */
 load();
 applyTheme();
 render();
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+handleAuthRedirect().then(() => { if (signedIn()) { render(); sync(); } });
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }

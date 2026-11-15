@@ -4,7 +4,7 @@ A fast, no-nonsense personal tracker: **habits, weight, Quran and journal** in o
 
 - **Zero dependencies, no build step.** Plain HTML/CSS/JS, about 100 KB total before compression. Charts are hand-drawn SVG. Switching screens takes about 5 ms.
 - **Works offline and installs to your phone.** It's a PWA: open it, then use "Add to Home Screen".
-- **Your data stays on your device** in `localStorage`. Use **Settings → Export backup** now and then.
+- **Cloud sync and backup.** Log in with your email and your data syncs between your phone and laptop, and survives a lost phone. It also works offline: changes you make offline sync when you're back online.
 
 ## What it tracks
 
@@ -16,6 +16,17 @@ A fast, no-nonsense personal tracker: **habits, weight, Quran and journal** in o
 | **Journal** | Mood plus free text for each day, a 60-day mood chart, and searchable entries. |
 
 Every screen has a day picker, so you can log or fix past days.
+
+## Turn on sync (one time, about 3 minutes)
+
+1. Create a free project at [supabase.com](https://supabase.com) (New project, any name and region).
+2. **SQL Editor → New query**: paste [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
+3. **Authentication → URL Configuration**: set **Site URL** to your app's address (e.g. `https://ramykaz.github.io/Tracker.ME/`).
+4. **Authentication → Email Templates → Magic Link**: add `{{ .Token }}` to the email body, so the email also contains a 6-digit code. This matters on iPhone, where a link opens Safari instead of the installed app.
+5. **Project Settings → API**: copy the **Project URL** and the **anon public** key. Put them in `config.js` (or paste them in the app under Settings → Sync).
+6. In the app: **Settings → Sync**, enter your email, then type the code. Do the same on every device.
+
+How it works: each entry (one weight, one habit check, one journal day…) syncs on its own, so editing on two devices doesn't overwrite unrelated changes. Row-level security means only your login can read or write your rows. The anon key is safe to make public.
 
 ## Run locally
 

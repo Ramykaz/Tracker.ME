@@ -384,3 +384,13 @@ dialog[open] { animation: rise .2s var(--ease); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- sync ---------- */
+.sync-ind { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; background: var(--acc); box-shadow: 0 0 0 4px var(--glow); }
+.sync-ind[data-s="syncing"] { animation: pulse 1s ease-in-out infinite; }
+.sync-ind[data-s="error"] { background: var(--bad); box-shadow: 0 0 0 4px color-mix(in oklab, var(--bad) 18%, transparent); }
+.sync-ind[data-s="idle"] { background: var(--fa); box-shadow: none; }
+@keyframes pulse { 50% { opacity: .35; } }
+.sync-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--s2); border: 1px solid var(--line); }
+#syncBox { gap: 10px; }
+#syncBox .frow { align-items: flex-end; }
