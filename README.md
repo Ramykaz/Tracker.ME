@@ -2,7 +2,7 @@
 
 A fast, no-nonsense personal tracker: **habits, weight, Quran and journal** in one place.
 
-- **Zero dependencies, no build step.** Plain HTML/CSS/JS, about 60 KB total. Charts are hand-drawn SVG. Switching screens takes about 5 ms.
+- **Zero dependencies, no build step.** Plain HTML/CSS/JS, about 100 KB total before compression. Charts are hand-drawn SVG. Switching screens takes about 5 ms.
 - **Works offline and installs to your phone.** It's a PWA: open it, then use "Add to Home Screen".
 - **Your data stays on your device** in `localStorage`. Use **Settings → Export backup** now and then.
 
