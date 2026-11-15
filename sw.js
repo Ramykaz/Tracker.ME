@@ -1,5 +1,5 @@
 // Offline-first cache. Bump VERSION when shipping changes.
-const VERSION = 'tm-v2';
+const VERSION = 'tm-v3';
 const SHELL = ['./', './index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

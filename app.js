@@ -1066,13 +1066,19 @@ function fromRecords(r) {
   return normalize(st);
 }
 
-async function api(path, opts = {}, auth = true) {
-  const headers = { apikey: syncKey(), 'Content-Type': 'application/json', Authorization: 'Bearer ' + (auth && Y.session ? Y.session.access_token : syncKey()), ...(opts.headers || {}) };
+async function api(path, opts = {}, auth = true, retried = false) {
+  // Publishable keys (sb_publishable_…) go only in `apikey`; the user's JWT goes in Authorization.
+  const headers = { apikey: syncKey(), 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (auth && Y.session && Y.session.access_token) headers.Authorization = 'Bearer ' + Y.session.access_token;
+  else if (/^eyJ/.test(syncKey())) headers.Authorization = 'Bearer ' + syncKey(); // legacy anon JWT key
   let res;
   try { res = await fetch(syncUrl() + path, { ...opts, headers }); }
   catch (e) { const err = new Error(navigator.onLine === false ? 'Offline — will sync when you’re back online' : 'Can’t reach the sync server'); err.offline = true; throw err; }
   const text = await res.text();
   let body = null; try { body = text ? JSON.parse(text) : null; } catch (e) {}
+  if (res.status === 401 && auth && Y.session && !retried && !path.startsWith('/auth/v1/token')) {
+    Y.session.expires_at = 0; await ensureToken(); return api(path, opts, auth, true); // token expired early: refresh once
+  }
   if (!res.ok) {
     const err = new Error((body && (body.msg || body.message || body.error_description || body.error)) || 'Sync error ' + res.status);
     err.status = res.status; throw err;
@@ -1211,7 +1217,7 @@ Object.assign(ACT, {
     let url = ($('#sbUrl') || {}).value || '', key = ($('#sbKey') || {}).value || '';
     url = url.trim().replace(/\/+$/, ''); key = key.trim();
     if (!/^https:\/\/[^/\s]+$/.test(url)) return toast('Paste the project URL, like https://xxxx.supabase.co');
-    if (key.length < 20) return toast('Paste the anon public key');
+    if (key.length < 20) return toast('Paste the publishable (anon) key');
     Y.url = url; Y.key = key; saveSync(); setSyncState('idle');
   },
   'sync-disconnect': () => { Y = {}; saveSync(); setSyncState('idle'); },
