@@ -79,6 +79,59 @@ const ICONS = {
   up: '<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>',
   archive: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10h14V9M10 13h4"/>',
 };
+
+/* Habit icons: hand-drawn line icons on a 24px grid (no emoji). */
+const HICONS = {
+  target: ['Goal', '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8"/>'],
+  mosque: ['Prayer', '<path d="M3.5 20.5h17M6 20.5v-6.5h12v6.5M6 14a6 6 0 0112 0M12 3.5v3.5M10 20.5v-2.5a2 2 0 014 0v2.5"/>'],
+  moonstar: ['Fasting', '<path d="M15 4.5A7.5 7.5 0 1019.5 15 6 6 0 0115 4.5z"/><path d="M18.5 4l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>'],
+  beads: ['Dhikr', '<circle cx="12" cy="4.5" r="1.6"/><circle cx="17" cy="6.5" r="1.6"/><circle cx="19" cy="11.5" r="1.6"/><circle cx="16.5" cy="16" r="1.6"/><circle cx="7" cy="6.5" r="1.6"/><circle cx="5" cy="11.5" r="1.6"/><circle cx="7.5" cy="16" r="1.6"/><path d="M12 17.5v4M10.5 21.5h3"/>'],
+  quran: ['Quran', '<path d="M2.5 5h6a3.5 3.5 0 013.5 3.5V20a2.5 2.5 0 00-2.5-2.5h-7z"/><path d="M21.5 5h-6A3.5 3.5 0 0012 8.5V20a2.5 2.5 0 012.5-2.5h7z"/>'],
+  coin: ['Charity', '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.5c-.5-1-1.4-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1.1 1.6 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.1 0-2-.5-2.5-1.5M12 6.5V8M12 16v1.5"/>'],
+  dumbbell: ['Workout', '<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>'],
+  shoe: ['Running', '<path d="M3 16.5h17a1 1 0 001-1V14a2 2 0 00-1.5-1.9L14 10.5 12 6.5H9l.5 3-3.5 1-1-2.5H3z"/><path d="M3 19.5h18M10.5 10.5l1 1.5M8 11l1 1.5"/>'],
+  steps: ['Walking', '<path d="M7.5 3C9 3 10 4.8 10 7s-1 4-2.5 4S5 9.2 5 7s1-4 2.5-4zM16.5 8C18 8 19 9.8 19 12s-1 4-2.5 4S14 14.2 14 12s1-4 2.5-4zM5.5 13.5h4V15a2 2 0 01-4 0zM14.5 18.5h4v.5a2 2 0 01-4 0z"/>'],
+  bike: ['Cycling', '<circle cx="5.5" cy="16" r="3.5"/><circle cx="18.5" cy="16" r="3.5"/><path d="M5.5 16l3.5-7h5.5l4 7M9 9l2.5 7h-6M13 5.5h2.5l-1 3.5"/>'],
+  pulse: ['Stretch', '<path d="M3 12h4l3-7.5 4 15 3-7.5h4"/>'],
+  drop: ['Water', '<path d="M12 3s6.5 6.6 6.5 11.2A6.5 6.5 0 015.5 14.2C5.5 9.6 12 3 12 3z"/><path d="M9 14.5a3 3 0 003 3"/>'],
+  apple: ['Eat well', '<path d="M12 7.5c-2-1.5-7-1.5-7 4.5 0 4 2.5 8.5 5 8.5 1 0 1.3-.5 2-.5s1 .5 2 .5c2.5 0 5-4.5 5-8.5 0-6-5-6-7-4.5z"/><path d="M12 7.5c0-2 1-3.5 3-4"/>'],
+  bed: ['Sleep', '<path d="M3 18.5v-13M3 14.5h18v4M21 14.5v-2a3 3 0 00-3-3h-7v5"/><circle cx="7" cy="11.5" r="2"/>'],
+  moon: ['Night', '<path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/>'],
+  sun: ['Morning', '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>'],
+  leaf: ['Mindful', '<path d="M5 19.5c0-8.5 5-14.5 15-14.5 0 10.5-6 15-14 15"/><path d="M5 19.5l7.5-7.5"/>'],
+  heart: ['Health', '<path d="M12 20s-7.5-4.6-7.5-10.3A4.2 4.2 0 0112 7.3a4.2 4.2 0 017.5 2.4C19.5 15.4 12 20 12 20z"/>'],
+  book: ['Reading', '<path d="M5 5a2 2 0 012-2h12v15H7a2 2 0 00-2 2z"/><path d="M5 20a2 2 0 002 2h12v-4M9 7.5h6"/>'],
+  cap: ['Study', '<path d="M2 9.5l10-5 10 5-10 5z"/><path d="M6 11.5v4.5c3 2.5 9 2.5 12 0v-4.5M22 9.5v5.5"/>'],
+  pen: ['Writing', '<path d="M12 20h8.5"/><path d="M16.5 3.8a2.1 2.1 0 013 3L7.5 18.8l-4 1 1-4z"/>'],
+  code: ['Coding', '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4.5l-4 15"/>'],
+  globe: ['Language', '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3.3 3 13.7 0 17M12 3.5c-3 3.3-3 13.7 0 17"/>'],
+  wallet: ['Money', '<path d="M4.5 7.5a2 2 0 012-2h10.5v2.5"/><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M16 13.75h2"/>'],
+  people: ['Family', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14a6.5 6.5 0 013.5 6"/>'],
+  sparkle: ['Clean', '<path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>'],
+  phone: ['Phone', '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>'],
+  game: ['Gaming', '<rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7 10.5v4M5 12.5h4M15.5 12h.01M18 14h.01"/>'],
+  cookie: ['Sugar', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 9h.01M14 8h.01M15.5 13.5h.01M10 15h.01M12 11.5h.01"/>'],
+  burger: ['Junk food', '<path d="M4 11.5a8 6 0 0116 0z"/><path d="M3.5 14.5h17"/><path d="M4 17.5h16v.5a2 2 0 01-2 2H6a2 2 0 01-2-2z"/>'],
+  coffee: ['Caffeine', '<path d="M4 8.5h13v5.5a5 5 0 01-5 5H9a5 5 0 01-5-5z"/><path d="M17 10.5h1.5a2.5 2.5 0 010 5H17M8.5 3.5v2M12.5 3.5v2"/>'],
+  smoke: ['Smoking', '<path d="M2.5 14.5h14v3.5h-14zM19.5 14.5V18M17 14.5V18"/><path d="M19.5 11c0-2 2-2 2-4M16.5 11c0-2 2-2 2-4"/>'],
+  ban: ['Quit', '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>'],
+  shield: ['Guard', '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>'],
+};
+const ICON_RULES = [
+  [/quran|qur'?an|mushaf|surah|juz/i, 'quran'], [/pray|salah|salat|fajr|dhuhr|zuhr|asr|maghrib|isha|tahajjud|masjid|mosque|qiyam|witr|sunnah/i, 'mosque'],
+  [/fast|sawm|siyam|ramadan/i, 'moonstar'], [/dhikr|zikr|adhkar|azkar|tasbih|istighfar|dua|salawat/i, 'beads'], [/sadaq|charity|donat|zakat|give/i, 'coin'],
+  [/gym|workout|lift|weights|strength|push.?up|pull.?up|squat|exercise|train|calisthen/i, 'dumbbell'], [/run|jog|sprint|marathon|5k|10k/i, 'shoe'],
+  [/walk|steps|hike/i, 'steps'], [/bike|cycl/i, 'bike'], [/stretch|yoga|mobility|cardio/i, 'pulse'], [/water|hydrat|drink/i, 'drop'],
+  [/sugar|sweet|candy|dessert|chocolate/i, 'cookie'], [/junk|fast food|fried|burger|pizza|soda/i, 'burger'], [/coffee|caffeine|tea\b|energy drink/i, 'coffee'],
+  [/smok|cigar|vape|nicotine/i, 'smoke'], [/social|instagram|tiktok|scroll|youtube|reels|screen|phone/i, 'phone'], [/game|gaming|playstation|xbox/i, 'game'],
+  [/eat|meal|veg|fruit|diet|protein|salad|healthy/i, 'apple'], [/sleep|bed|nap/i, 'bed'], [/night|late/i, 'moon'], [/morning|wake|sunrise|early/i, 'sun'],
+  [/meditat|mindful|breath|gratitude|calm/i, 'leaf'], [/read|book|pages/i, 'book'], [/study|learn|course|class|exam|homework|revise/i, 'cap'],
+  [/journal|write|writing|blog/i, 'pen'], [/code|coding|program|leetcode|dev/i, 'code'], [/language|english|arabic|spanish|french|vocab/i, 'globe'],
+  [/money|save|saving|budget|spend|invest/i, 'wallet'], [/family|parent|mom|dad|mother|father|call|friend|kids/i, 'people'], [/clean|tidy|room|chores|laundry|dishes/i, 'sparkle'],
+  [/vitamin|health|skin|teeth|floss|medic/i, 'heart'],
+];
+const guessIcon = (name, kind) => { for (const [re, ic] of ICON_RULES) if (re.test(name || '')) return ic; return kind === 'avoid' ? 'ban' : 'target'; };
+const hicon = (h, s = 22, w = 1.9) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(HICONS[h.icon] || HICONS.target)[1]}</svg>`;
 const icon = (n, s = 20, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 
 /* ================= state & storage ================= */
@@ -122,6 +175,7 @@ function fixHabit(h) {
     freq: kind === 'avoid' ? { type: 'daily' } : freq,
     start: isKey(h.start) ? h.start : T(),
     color: typeof h.color === 'string' && /^#[0-9a-f]{6}$/i.test(h.color) ? h.color : COLORS[0],
+    icon: typeof h.icon === 'string' && HICONS[h.icon] ? h.icon : guessIcon(h.name, kind),
     archived: !!h.archived,
   };
 }
@@ -278,8 +332,8 @@ function habitRow(h, k, later = false) {
   const done = isDone(h, k), v = +logOf(h, k) || 0;
   if (h.kind === 'avoid') {
     const slip = !!logOf(h, k);
-    return `<div class="row quit ${slip ? 'slip' : 'done'}" style="--c:${h.color}">
-      <span class="tick" aria-hidden="true">${slip ? icon('x', 22, 2.6) : icon('shield', 20, 2.2)}</span>
+    return `<div class="row quit ${slip ? 'slip' : 'done'}">
+      <span class="tick" aria-hidden="true">${hicon(h)}</span>
       <a class="meta" href="#habit/${h.id}"><div class="name">${esc(h.name)}</div>
         <div class="sub"><span>${slip ? 'Slipped — fresh start tomorrow' : `Clean ${plural(stats(h).cur, 'day')}`}</span></div></a>
       <button class="slip-btn" data-act="toggle" data-id="${h.id}" data-fk="t${h.id}" aria-pressed="${slip}">${slip ? 'Undo slip' : 'I slipped'}</button>
@@ -294,8 +348,8 @@ function habitRow(h, k, later = false) {
       <span class="of">/ ${num(h.target, 2)}${h.unit ? ' ' + esc(h.unit) : ''}</span>
       <button data-act="inc" data-id="${h.id}" data-fk="i${h.id}" aria-label="Increase">${icon('plus', 18)}</button>
     </div>` : '';
-  return `<div class="row ${done ? 'done' : ''} ${later ? 'later' : ''}" style="--c:${h.color}">
-    <button class="tick" data-act="toggle" data-id="${h.id}" data-fk="t${h.id}" aria-pressed="${done}" aria-label="Mark ${esc(h.name)} ${done ? 'not done' : 'done'}">${icon('check')}</button>
+  return `<div class="row ${done ? 'done' : ''} ${later ? 'later' : ''}">
+    <button class="tick" data-act="toggle" data-id="${h.id}" data-fk="t${h.id}" aria-pressed="${done}" aria-label="Mark ${esc(h.name)} ${done ? 'not done' : 'done'}">${hicon(h)}<span class="ok">${icon('check', 12, 3.4)}</span></button>
     <a class="meta" href="#habit/${h.id}"><div class="name">${esc(h.name)}</div>
       <div class="sub"><span>${sub.map(esc).join(' · ')}</span>${streakTag(h)}</div></a>
     ${right}
@@ -400,8 +454,8 @@ VIEWS.habits = () => {
       }
       cells += `<i class="${c}" title="${short(k)}"></i>`;
     }
-    return `<a class="hcard" href="#habit/${h.id}" style="--c:${h.color}">
-      <span class="dot"></span>
+    return `<a class="hcard" href="#habit/${h.id}">
+      <span class="hic">${hicon(h, 22)}</span>
       <div class="meta"><div class="name">${esc(h.name)}</div><div class="sub"><span>${esc(freqLabel(h))}${h.kind === 'count' ? ` · ${num(h.target, 2)} ${esc(h.unit || '')}` : ''}</span></div></div>
       <div class="mini" aria-hidden="true">${cells}</div>
       <div class="hstat"><b>${s.cur}<small class="faint">${streakUnit(h)}</small></b><span>streak</span></div>
@@ -428,7 +482,7 @@ VIEWS.habit = id => {
     chartTitle = 'Last 30 days';
     const bars = [];
     for (let i = 29; i >= 0; i--) { const k = addDays(t, -i); bars.push({ k, label: short(k), v: +logOf(h, k) || 0, dim: !isDue(h, k) }); }
-    chart = chartSlot({ type: 'bar', bars, goal: h.target, color: h.color, fmt: v => `${num(v, 2)} ${h.unit || ''}` });
+    chart = chartSlot({ type: 'bar', bars, goal: h.target, fmt: v => `${num(v, 2)} ${h.unit || ''}` });
   } else if (h.kind === 'avoid') {
     chartTitle = 'Slips per week';
     const bars = [];
@@ -447,11 +501,11 @@ VIEWS.habit = id => {
       else for (let d = 0; d < 7; d++) { const k = addDays(w, d); if (k > t || !isDue(h, k)) continue; due++; if (isDone(h, k)) ok++; }
       bars.push({ k: w, label: 'Wk of ' + short(w), v: due ? Math.round(ok / due * 100) : 0, dim: !due || addDays(w, 6) < h.start });
     }
-    chart = chartSlot({ type: 'bar', bars, max: 100, color: h.color, fmt: v => v + '%' });
+    chart = chartSlot({ type: 'bar', bars, max: 100, fmt: v => v + '%' });
   }
   return `
     <header class="top"><a class="icon-btn back" href="#habits" aria-label="Back to habits">${icon('chevL')}</a>
-      <span class="dot" style="--c:${h.color};width:12px;height:12px"></span>
+      <span class="hic">${hicon(h, 22)}</span>
       <div style="min-width:0"><h1 style="overflow:hidden;text-overflow:ellipsis">${esc(h.name)}</h1><div class="sub">${esc(freqLabel(h))}${h.kind === 'count' ? ` · target ${num(h.target, 2)} ${esc(h.unit || '')}` : ''} · since ${fd(h.start, { month: 'short', day: 'numeric', year: 'numeric' })}${h.archived ? ' · archived' : ''}</div></div>
       <span class="sp"></span><button class="btn sm" data-act="edit-habit" data-id="${h.id}">${icon('edit', 16)}Edit</button></header>
     <div class="tiles">
@@ -674,12 +728,12 @@ function heatSVG(h, w) {
       let fill = 'var(--miss)', op = 1, act = '';
       const st = started(h, k);
       if (!st) { fill = 'transparent'; }
-      else if (h.kind === 'avoid') { fill = logOf(h, k) ? 'var(--bad)' : h.color; op = logOf(h, k) ? .85 : .9; act = 'heat'; }
+      else if (h.kind === 'avoid') { fill = logOf(h, k) ? 'var(--bad)' : 'var(--acc)'; op = logOf(h, k) ? .85 : .9; act = 'heat'; }
       else {
         act = 'heat';
         const f = frac(h, k);
-        if (f >= 1) fill = h.color;
-        else if (f > 0) { fill = h.color; op = .25 + f * .5; }
+        if (f >= 1) fill = 'var(--acc)';
+        else if (f > 0) { fill = 'var(--acc)'; op = .25 + f * .5; }
         else if (!isDue(h, k) || h.freq.type === 'weekly') { fill = 'var(--s2)'; }
       }
       const tip = `${fd(k, { weekday: 'short', month: 'short', day: 'numeric' })}${h.kind === 'count' && logOf(h, k) ? ' · ' + num(+logOf(h, k), 2) : ''}`;
@@ -764,8 +818,9 @@ sheet.addEventListener('close', () => { sheetBody.innerHTML = ''; });
 function habitForm(h, tpl) {
   const x = h || { kind: 'check', freq: { type: 'daily' }, start: T(), color: COLORS[S.habits.length % COLORS.length], ...(tpl || {}) };
   const f = x.freq || { type: 'daily' };
+  const xi = x.icon && HICONS[x.icon] ? x.icon : guessIcon(x.name, x.kind);
   const radio = (name, val, label, cur) => `<label><input type="radio" name="${name}" value="${val}" ${cur === val ? 'checked' : ''}><span>${label}</span></label>`;
-  return `<form class="form" data-form="habit" data-id="${h ? h.id : ''}" data-kind="${x.kind}" data-freq="${f.type}" novalidate>
+  return `<form class="form" data-form="habit" data-id="${h ? h.id : ''}" data-icon-picked="${h ? 1 : ''}" data-kind="${x.kind}" data-freq="${f.type}" novalidate>
     <div class="form-h"><h3>${h ? 'Edit habit' : 'New habit'}</h3><button type="button" class="icon-btn" data-act="close" aria-label="Close">${icon('x')}</button></div>
     ${!h ? `<div class="chips left">${TEMPLATES.map((t, i) => `<button type="button" class="chip" data-act="tpl" data-i="${i}">${esc(t.name)}</button>`).join('')}</div>` : ''}
     <label class="fld"><span>Name</span><input class="in" name="name" maxlength="80" value="${esc(x.name || '')}" placeholder="e.g. Morning run" ${h ? '' : 'autofocus'} required></label>
@@ -783,7 +838,7 @@ function habitForm(h, tpl) {
     </div>
     <label class="fld"><span>Start date</span><input class="in" name="start" type="date" value="${x.start || T()}" required></label>
     <p class="hint">“Every N days” counts from the start date.</p>
-    <div class="fld"><span class="lab">Color</span><div class="swatches">${COLORS.map(c => `<label><input type="radio" name="color" value="${c}" ${x.color === c ? 'checked' : ''} aria-label="Color ${c}"><span style="--c:${c}"></span></label>`).join('')}</div></div>
+    <div class="fld"><span class="lab">Icon</span><div class="icons" role="radiogroup" aria-label="Icon">${Object.keys(HICONS).map(n => `<label title="${HICONS[n][0]}"><input type="radio" name="icon" value="${n}" ${xi === n ? 'checked' : ''} aria-label="${HICONS[n][0]}"><span>${hicon({ icon: n }, 22)}</span></label>`).join('')}</div></div>
     <div class="actions">
       ${h ? `<button type="button" class="btn sm danger" data-act="del-habit" data-id="${h.id}">${icon('trash', 16)}Delete</button>
         <button type="button" class="btn sm" data-act="archive-habit" data-id="${h.id}">${icon('archive', 16)}${h.archived ? 'Unarchive' : 'Archive'}</button>` : ''}
@@ -801,7 +856,15 @@ function fillTemplate(form, t) {
   if (f.n) form.elements.n.value = f.n;
   if (f.times) form.elements.times.value = f.times;
   if (f.days) form.querySelectorAll('[name=days]').forEach(c => c.checked = f.days.includes(+c.value));
+  form.dataset.iconPicked = ''; autoIcon(form);
   syncForm(form);
+}
+// Suggest an icon from the name until the user picks one themselves.
+function autoIcon(form) {
+  if (form.dataset.iconPicked) return;
+  const kind = (form.querySelector('[name=kind]:checked') || {}).value;
+  const r = form.querySelector(`[name=icon][value="${guessIcon(form.elements.name.value, kind)}"]`);
+  if (r && !r.checked) { r.checked = true; }
 }
 function syncForm(form) {
   form.dataset.kind = (form.querySelector('[name=kind]:checked') || {}).value || 'check';
@@ -820,7 +883,7 @@ function submitHabit(form) {
   if (freq.type === 'weekly') { freq.times = Math.round(+fdta.get('times')); if (!(freq.times >= 1 && freq.times <= 7)) { form.elements.times.focus(); return toast('Pick 1 to 7 times'); } }
   const start = fdta.get('start'); if (!isKey(start)) return toast('Pick a start date');
   const id = form.dataset.id;
-  const data = fixHabit({ id: id || uid(), name, kind, target, unit: String(fdta.get('unit') || '').trim(), freq, start, color: fdta.get('color') || COLORS[0], archived: id ? hById(id).archived : false });
+  const data = fixHabit({ id: id || uid(), name, kind, target, unit: String(fdta.get('unit') || '').trim(), freq, start, color: id ? hById(id).color : COLORS[0], icon: fdta.get('icon'), archived: id ? hById(id).archived : false });
   if (id) S.habits[S.habits.findIndex(h => h.id === id)] = data; else S.habits.push(data);
   save(); closeSheet(); render(); toast(id ? 'Saved' : 'Habit added');
 }
@@ -1010,9 +1073,13 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-change]');
   if (el) { CHG[el.dataset.change] && CHG[el.dataset.change](el); return; }
-  const form = e.target.closest('[data-form=habit]'); if (form) syncForm(form);
+  const form = e.target.closest('[data-form=habit]');
+  if (form) { if (e.target.name === 'icon') form.dataset.iconPicked = '1'; if (e.target.name === 'kind') autoIcon(form); syncForm(form); }
 });
-document.addEventListener('input', e => { const el = e.target.closest('[data-input]'); if (el && INP[el.dataset.input]) INP[el.dataset.input](el); });
+document.addEventListener('input', e => {
+  const el = e.target.closest('[data-input]'); if (el && INP[el.dataset.input]) INP[el.dataset.input](el);
+  const form = e.target.closest('[data-form=habit]'); if (form && e.target.name === 'name') autoIcon(form);
+});
 document.addEventListener('submit', e => {
   const form = e.target.closest('[data-form=habit]'); if (!form) return;
   e.preventDefault(); submitHabit(form);

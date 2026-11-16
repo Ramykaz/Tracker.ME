@@ -394,3 +394,27 @@ dialog[open] { animation: rise .2s var(--ease); }
 .sync-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--s2); border: 1px solid var(--line); }
 #syncBox { gap: 10px; }
 #syncBox .frow { align-items: flex-end; }
+
+/* ---------- habit icons ---------- */
+.hcard { --c: var(--acc); }
+.tick { position: relative; color: var(--mu); border-color: var(--line); background: var(--s2); }
+.tick:hover { color: var(--tx); border-color: var(--acc); }
+.tick svg { width: 22px; height: 22px; stroke-width: 1.9; }
+.tick .ok {
+  position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--tx); color: var(--bg); border: 2px solid var(--s1); transform: scale(0); transition: transform .18s var(--ease);
+}
+.tick .ok svg { width: 10px; height: 10px; stroke-width: 3.4; }
+.row.done .tick { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+.row.done .tick .ok { transform: scale(1); }
+.row.done { background: color-mix(in oklab, var(--acc) 7%, var(--s1)); border-color: color-mix(in oklab, var(--acc) 28%, var(--line)); }
+.row.quit .tick { border-radius: 13px; }
+.row.quit.slip .tick { background: color-mix(in oklab, var(--bad) 14%, var(--s2)); border-color: color-mix(in oklab, var(--bad) 45%, var(--line)); color: var(--bad); }
+.hic { width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center; background: color-mix(in oklab, var(--acc) 12%, var(--s2)); color: var(--acc-tx); }
+.top .hic { width: 44px; height: 44px; }
+.icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+.icons input { position: absolute; opacity: 0; pointer-events: none; }
+.icons span { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--s2); display: grid; place-items: center; color: var(--mu); cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
+.icons span:hover { color: var(--tx); border-color: var(--s3); }
+.icons input:checked + span { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+.icons input:focus-visible + span { outline: 2px solid var(--acc); outline-offset: 2px; }
